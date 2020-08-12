@@ -2,6 +2,7 @@ import { IsNotEmpty, IsEmail, IsDate, MaxDate, ValidateNested } from 'class-vali
 import { Type } from 'class-transformer'
 
 class UserDto {
+
     @IsNotEmpty()
     @IsEmail()
     email: string;
@@ -18,6 +19,7 @@ class UserDto {
 }
 
 export class CreateUserDto {
+
     @ValidateNested()
     @Type(() => UserDto)
     user: UserDto;

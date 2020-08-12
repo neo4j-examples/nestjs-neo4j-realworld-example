@@ -1,6 +1,7 @@
 import { Node } from 'neo4j-driver'
 
 export class User {
+
     constructor(private node: Node) {}
 
     getId(): string {

@@ -6,7 +6,6 @@ import { Neo4jTypeInterceptor } from 'nest-neo4j/dist';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 
-
 @UseInterceptors(Neo4jTypeInterceptor)
 @Controller('articles')
 export class ArticleController {

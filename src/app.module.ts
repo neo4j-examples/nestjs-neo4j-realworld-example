@@ -1,11 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService  } from '@nestjs/config';
 import { Neo4jModule, Neo4jConfig } from 'nest-neo4j';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ArticleModule } from './article/article.module';
 
 @Module({

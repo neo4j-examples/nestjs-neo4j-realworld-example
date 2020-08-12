@@ -1,15 +1,13 @@
 import { Controller, Post, Body, Request, UseFilters, UseGuards, Get, Put, UseInterceptors } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 import { AuthService } from './auth/auth.service';
 import { User } from './entity/user.entity';
-import { Neo4jErrorFilter, Neo4jTypeInterceptor } from 'nest-neo4j';
-import { LocalAuthGuard } from './auth/local-auth.guard';
+import { Neo4jTypeInterceptor } from 'nest-neo4j';
 import { JwtAuthGuard } from './auth/jwt.auth-guard';
 
 
 @UseGuards(JwtAuthGuard)
-@UseInterceptors(Neo4jTypeInterceptor.withOptions(true, true))
+@UseInterceptors(Neo4jTypeInterceptor)
 @Controller('user')
 export class UserController {
 

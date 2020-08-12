@@ -8,7 +8,7 @@ import { Comment } from './entity/comment.entity';
 
 type ArticleResponse = {
     articlesCount: number;
-    articles: Article[]
+    articles: Record<string, any>[]
 }
 
 @Injectable({ scope: Scope.REQUEST })
@@ -19,7 +19,7 @@ export class ArticleService {
         private readonly neo4jService: Neo4jService
     ) {}
 
-    create(title: string, description: string, body: string, tagList: string[]): Promise<any> {
+    create(title: string, description: string, body: string, tagList: string[]): Promise<Article> {
         return this.neo4jService.write(`
             MATCH (u:User {id: $userId})
 
@@ -61,7 +61,7 @@ export class ArticleService {
             })
     }
 
-    list() {
+    list(): Promise<ArticleResponse> {
         const skip = this.neo4jService.int(0)
         const limit = this.neo4jService.int(10)
 
