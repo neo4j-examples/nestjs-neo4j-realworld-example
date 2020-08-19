@@ -5,6 +5,7 @@ import { Neo4jService } from 'nest-neo4j/dist';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { Comment } from './entity/comment.entity';
+import { Tag } from './entity/tag.entity';
 
 type ArticleResponse = {
     articlesCount: number;
@@ -34,7 +35,9 @@ export class ArticleService {
             CREATE (u)-[:POSTED]->(a)
 
             FOREACH ( name IN $tagList |
-                MERGE (t:Tag {name: name}) ON CREATE SET t.id = randomUUID(), t.slug = apoc.text.slug(name)
+                MERGE (t:Tag {name: name})
+                ON CREATE SET t.id = randomUUID(),  t.slug = apoc.text.slug(name)
+
                 MERGE (a)-[:HAS_TAG]->(t)
             )
 
@@ -54,7 +57,7 @@ export class ArticleService {
                 return new Article(
                     row.get('a'),
                     <User> this.request.user,
-                    row.get('tagList'),
+                    row.get('tagList').map(tag => new Tag(tag)),
                     row.get('favoritesCount'),
                     row.get('favorited')
                 )
@@ -117,7 +120,7 @@ export class ArticleService {
                     return new Article(
                         row.get('a'),
                         new User(row.get('author')),
-                        row.get('tagList'),
+                        row.get('tagList').map(tag => new Tag(tag)),
                         row.get('favoritesCount'),
                         row.get('favorited')
                     )
@@ -129,6 +132,77 @@ export class ArticleService {
                 }
 
             })
+    }
+
+    getFeed() {
+        const userId = (<User> this.request.user).getId()
+
+        const skip = this.neo4jService.int(0)
+        const limit = this.neo4jService.int(10)
+
+        const params: Record<string, any> = {
+            userId: this.request.user ? (<User> this.request.user).getId() : null,
+            skip, limit
+        }
+
+        const where = [];
+
+        if ( this.request.query.author ) {
+            where.push( `a.username = $author` )
+            params.author = this.request.query.author
+        }
+
+        if ( this.request.query.favorited ) {
+            where.push( `(a)<-[:FAVORITED]-({username: $favorited})` )
+            params.favorited = this.request.query.favorited
+        }
+
+        if ( this.request.query.tag ) {
+            where.push( ` ALL (tag in $tags WHERE (a)-[:HAS_TAG]->({name: tag})) ` )
+            params.tags = (<string> this.request.query.tag).split(',')
+        }
+
+        return this.neo4jService.read(`
+            MATCH (current:User)-[:FOLLOWS]->(u)-[:POSTED]->(a)
+            ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+
+            WITH count(a) AS articlesCount, collect(a) AS articles
+
+            UNWIND articles AS a
+
+            WITH articlesCount, a
+            ORDER BY a.createdAt DESC
+            SKIP $skip LIMIT $limit
+
+            RETURN
+                articlesCount,
+                a,
+                [ (a)<-[:POSTED]-(u) | u ][0] AS author,
+                [ (a)-[:HAS_TAG]->(t) | t ] AS tagList,
+                CASE
+                    WHEN $userId IS NOT NULL
+                    THEN exists((a)<-[:FAVORITED]-({id: $userId}))
+                    ELSE false
+                END AS favorited,
+                size((a)<-[:FAVORITED]-()) AS favoritesCount
+            `, params)
+                .then(res => {
+                    const articlesCount = res.records.length ? res.records[0].get('articlesCount') : 0
+                    const articles = res.records.map(row => {
+                        return new Article(
+                            row.get('a'),
+                            new User(row.get('author')),
+                            row.get('tagList').map(tag => new Tag(tag)),
+                            row.get('favoritesCount'),
+                            row.get('favorited')
+                        )
+                    })
+
+                    return {
+                        articlesCount,
+                        articles: articles.map(a => a.toJson()),
+                    }
+                })
     }
 
     find(slug: string): Promise<Article | undefined> {
@@ -156,7 +230,7 @@ export class ArticleService {
                 return new Article(
                     row.get('a'),
                     new User(row.get('author')),
-                    row.get('tagList'),
+                    row.get('tagList').map(tag => new Tag(tag)),
                     row.get('favoritesCount'),
                     row.get('favorited')
                 )
@@ -182,7 +256,6 @@ export class ArticleService {
 
             RETURN
                 a,
-                [ (a)<-[:POSTED]-(u) | u ][0] AS author,
                 [ (a)-[:HAS_TAG]->(t) | t ] AS tagList,
                 CASE
                     WHEN $userId IS NOT NULL
@@ -204,7 +277,7 @@ export class ArticleService {
                 return new Article(
                     row.get('a'),
                     new User(row.get('author')),
-                    row.get('tagList'),
+                    row.get('tagList').map(tag => new Tag(tag)),
                     row.get('favoritesCount'),
                     row.get('favorited')
                 )
@@ -233,7 +306,7 @@ export class ArticleService {
             ON CREATE SET r.createdAt = datetime()
 
             RETURN a,
-                [ (a)<-[:POSTED]-(u) | u ][0] AS author,
+                [ (a)<-[:POSTED]-(ux) | ux ][0] AS author,
                 [ (a)-[:HAS_TAG]->(t) | t ] AS tagList,
                 CASE
                     WHEN $userId IS NOT NULL
@@ -253,7 +326,7 @@ export class ArticleService {
                 return new Article(
                     row.get('a'),
                     new User(row.get('author')),
-                    row.get('tagList'),
+                    row.get('tagList').map(tag => new Tag(tag)),
                     row.get('favoritesCount'),
                     row.get('favorited')
                 )
@@ -269,7 +342,7 @@ export class ArticleService {
             DELETE r
 
             RETURN a,
-                [ (a)<-[:POSTED]-(u) | u ][0] AS author,
+                [ (a)<-[:POSTED]-(ux) | ux ][0] AS author,
                 [ (a)-[:HAS_TAG]->(t) | t ] AS tagList,
                 CASE
                     WHEN $userId IS NOT NULL
@@ -289,7 +362,7 @@ export class ArticleService {
                 return new Article(
                     row.get('a'),
                     new User(row.get('author')),
-                    row.get('tagList'),
+                    row.get('tagList').map(tag => new Tag(tag)),
                     row.get('favoritesCount'),
                     row.get('favorited')
                 )
@@ -306,7 +379,7 @@ export class ArticleService {
                 createdAt: datetime(),
                 updatedAt: datetime(),
                 body: $body
-            })-[:ON]->(a)
+            })-[:FOR]->(a)
 
             RETURN c, a
         `, {
@@ -326,11 +399,11 @@ export class ArticleService {
     getComments(slug: string): Promise<Comment[]> {
         return this.neo4jService.read(`
             MATCH (:Article {slug: $slug})<-[:FOR]-(c:Comment)<-[:COMMENTED]-(a)
-
             RETURN c, a
+            ORDER BY c.createdAt DESC
         `, { slug })
             .then(res => {
-                if ( !res.records.length ) return undefined;
+                if ( !res.records.length ) return [];
 
                 return res.records.map(row => new Comment(row.get('c'), new User(row.get('a'))))
             })
@@ -338,7 +411,7 @@ export class ArticleService {
 
     deleteComment(slug: string, commentId: string): Promise<boolean> {
         return this.neo4jService.write(`
-            MATCH (:Article {slug: $slug})<-[:ON]-(c:Comment {id: $commentId})<-[:COMMENTED]-(a:User {id: $userId})
+            MATCH (:Article {slug: $slug})<-[:FOR]-(c:Comment {id: $commentId})<-[:COMMENTED]-(a:User {id: $userId})
             DETACH DELETE c
 
             RETURN c, a
@@ -348,7 +421,7 @@ export class ArticleService {
             commentId,
         })
             .then(res => {
-                return res.records.length == 1
+                return res.records.length === 1
             })
     }
 

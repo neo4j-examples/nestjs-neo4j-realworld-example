@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
 import { EncryptionService } from 'src/user/encryption/encryption.service';
@@ -9,6 +9,8 @@ import { LocalStrategy } from './auth/local.strategy';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { UserController } from './user.controller';
+import { ProfileController } from './profile/profile.controller';
+import { Neo4jService } from 'nest-neo4j/dist';
 
 @Module({
   imports: [
@@ -25,7 +27,19 @@ import { UserController } from './user.controller';
     }),
   ],
   providers: [UserService, LocalStrategy, JwtStrategy, AuthService, EncryptionService],
-  controllers: [UserController, UsersController],
+  controllers: [UserController, UsersController, ProfileController],
   exports: [],
 })
-export class UserModule {}
+export class UserModule implements OnModuleInit {
+
+  constructor(private readonly neo4jService: Neo4jService) {}
+
+  onModuleInit() {
+    return this.neo4jService.write(`
+      CREATE CONSTRAINT ON (u:User)
+      ASSERT u.username IS UNIQUE
+    `)
+      .catch(() => {})
+  }
+
+}

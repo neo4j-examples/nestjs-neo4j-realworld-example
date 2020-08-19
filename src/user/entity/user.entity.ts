@@ -2,7 +2,7 @@ import { Node } from 'neo4j-driver'
 
 export class User {
 
-    constructor(private node: Node) {}
+    constructor(private readonly node: Node) {}
 
     getId(): string {
         return (<Record<string, any>> this.node.properties).id

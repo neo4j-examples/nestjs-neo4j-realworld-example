@@ -5,6 +5,7 @@ import { JwtAuthGuard } from 'src/user/auth/jwt.auth-guard';
 import { Neo4jTypeInterceptor } from 'nest-neo4j/dist';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { JwtModule } from '@nestjs/jwt';
 
 @UseInterceptors(Neo4jTypeInterceptor)
 @Controller('articles')
@@ -12,6 +13,7 @@ export class ArticleController {
 
     constructor(private readonly articleService: ArticleService) {}
 
+    @UseGuards(JwtAuthGuard.optional())
     @Get()
     getList() {
         return this.articleService.list()
@@ -32,6 +34,13 @@ export class ArticleController {
         }
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Get('/feed')
+    async getFeed() {
+        return this.articleService.getFeed()
+    }
+
+    @UseGuards(JwtAuthGuard.optional())
     @Get('/:slug')
     async getIndex(@Param('slug') slug: string) {
         const article = await this.articleService.find(slug)
@@ -105,10 +114,19 @@ export class ArticleController {
     async getComments(@Param('slug') slug: string) {
         const comments = await this.articleService.getComments(slug)
 
-
         return {
             comments: comments.map(comment => comment.toJson()),
         }
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('/:slug/comments/:commentId')
+    async deleteComments(@Param('slug') slug: string, @Param('commentId') commentId: string) {
+        const outcome = await this.articleService.deleteComment(slug, commentId)
+
+        if ( !outcome ) throw new NotFoundException()
+
+        return 'OK'
     }
 
     @UseGuards(JwtAuthGuard)
