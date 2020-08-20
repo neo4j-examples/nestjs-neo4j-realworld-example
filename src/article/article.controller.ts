@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, UseInterceptors, Param, NotFoundException, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, UseInterceptors, Param, NotFoundException, Put, Delete, BadRequestException } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleService } from './article.service';
-import { JwtAuthGuard } from 'src/user/auth/jwt.auth-guard';
+import { JwtAuthGuard } from '../user/auth/jwt.auth-guard';
 import { Neo4jTypeInterceptor } from 'nest-neo4j/dist';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';

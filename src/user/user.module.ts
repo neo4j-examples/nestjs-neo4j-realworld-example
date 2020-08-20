@@ -1,7 +1,7 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
-import { EncryptionService } from 'src/user/encryption/encryption.service';
+import { EncryptionService } from '../user/encryption/encryption.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth/auth.service';
@@ -34,12 +34,10 @@ export class UserModule implements OnModuleInit {
 
   constructor(private readonly neo4jService: Neo4jService) {}
 
-  onModuleInit() {
-    return this.neo4jService.write(`
-      CREATE CONSTRAINT ON (u:User)
-      ASSERT u.username IS UNIQUE
-    `)
-      .catch(() => {})
+  async onModuleInit() {
+    await this.neo4jService.write(`CREATE CONSTRAINT ON (u:User) ASSERT u.id IS UNIQUE`).catch(() => {})
+    await this.neo4jService.write(`CREATE CONSTRAINT ON (u:User) ASSERT u.username IS UNIQUE`).catch(() => {})
+    await this.neo4jService.write(`CREATE CONSTRAINT ON (u:User) ASSERT u.email IS UNIQUE`).catch(() => {})
   }
 
 }

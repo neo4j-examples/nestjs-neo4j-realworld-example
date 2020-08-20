@@ -1,6 +1,6 @@
 // {"article":{"title":"How to train your dragon", "description":"Ever wonder how?", "body":"Very carefully.", "tagList":["dragons","training"]}}
 
-import { IsNotEmpty, ValidateNested, IsOptional } from "class-validator";
+import { IsNotEmpty, ValidateNested, IsOptional, IsObject } from "class-validator";
 import { Type } from "class-transformer";
 
 class Article {
@@ -19,6 +19,7 @@ class Article {
 
 export class UpdateArticleDto {
 
+    @IsObject()
     @ValidateNested()
     @Type(() => Article)
     article: Article;

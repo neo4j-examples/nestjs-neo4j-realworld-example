@@ -1,5 +1,5 @@
 import { Injectable, Scope, Inject } from '@nestjs/common';
-import { User } from 'src/user/entity/user.entity';
+import { User } from '../user/entity/user.entity';
 import { Article } from './entity/article.entity';
 import { Neo4jService } from 'nest-neo4j/dist';
 import { REQUEST } from '@nestjs/core';
@@ -65,8 +65,8 @@ export class ArticleService {
     }
 
     list(): Promise<ArticleResponse> {
-        const skip = this.neo4jService.int(0)
-        const limit = this.neo4jService.int(10)
+        const skip = this.neo4jService.int( parseInt(<string> this.request.query.offset) || 0)
+        const limit = this.neo4jService.int( parseInt(<string> this.request.query.limit) || 10)
 
         const params: Record<string, any> = {
             userId: this.request.user ? (<User> this.request.user).getId() : null,
@@ -137,8 +137,8 @@ export class ArticleService {
     getFeed() {
         const userId = (<User> this.request.user).getId()
 
-        const skip = this.neo4jService.int(0)
-        const limit = this.neo4jService.int(10)
+        const skip = this.neo4jService.int( parseInt(<string> this.request.query.offset) || 0)
+        const limit = this.neo4jService.int( parseInt(<string> this.request.query.limit) || 10)
 
         const params: Record<string, any> = {
             userId: this.request.user ? (<User> this.request.user).getId() : null,
@@ -148,7 +148,7 @@ export class ArticleService {
         const where = [];
 
         if ( this.request.query.author ) {
-            where.push( `a.username = $author` )
+            where.push( `(a)<-[:POSTED]-({username: $author})` )
             params.author = this.request.query.author
         }
 
@@ -256,6 +256,7 @@ export class ArticleService {
 
             RETURN
                 a,
+                [ (a)<-[:POSTED]-(ux) | ux ][0] AS author,
                 [ (a)-[:HAS_TAG]->(t) | t ] AS tagList,
                 CASE
                     WHEN $userId IS NOT NULL
@@ -381,7 +382,7 @@ export class ArticleService {
                 body: $body
             })-[:FOR]->(a)
 
-            RETURN c, a
+            RETURN c, u
         `, {
             slug,
             userId: (<User> this.request.user).getId(),
@@ -392,7 +393,7 @@ export class ArticleService {
 
                 const row = res.records[0]
 
-                return new Comment(row.get('c'), new User(row.get('a')))
+                return new Comment(row.get('c'), new User(row.get('u')))
             })
     }
 

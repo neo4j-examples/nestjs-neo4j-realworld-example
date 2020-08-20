@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Request, UseFilters, UseGuards, Get } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
 import { UserService } from './user.service';
 import { AuthService } from './auth/auth.service';
 import { User } from './entity/user.entity';
@@ -34,10 +35,9 @@ export class UsersController {
         }
     }
 
-
     @UseGuards(LocalAuthGuard)
     @Post('/login')
-    async postLogin(@Request() request) {
+    async postLogin(@Request() request, loginDto: LoginDto) {
         const token = this.authService.createToken(request.user)
 
         return {

@@ -1,5 +1,5 @@
 import { Node } from 'neo4j-driver'
-import { User } from 'src/user/entity/user.entity'
+import { User } from '../../user/entity/user.entity'
 import { Tag } from './tag.entity'
 
 export class Article {
