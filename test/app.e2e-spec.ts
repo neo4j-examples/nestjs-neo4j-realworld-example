@@ -9,6 +9,8 @@ import { O_TRUNC } from 'constants';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
+    let neo4j: Neo4jService
+    let api
 
     // Test Credentials
     const username = Math.random().toString()
@@ -24,12 +26,15 @@ describe('AppController (e2e)', () => {
         app = moduleFixture.createNestApplication();
         app.useGlobalPipes(new UnprocessibleEntityValidationPipe());
         await app.init();
+
+        api = app.getHttpServer()
+        neo4j = app.get(Neo4jService)
     });
 
     describe('/users', () => {
         describe('POST / → sign up', () => {
             it('should return 422 on missing info', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/users')
                     .send({ user: {} })
                     .expect(422)
@@ -42,7 +47,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should create user', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/users')
                     .send({ user: { username, email, password } })
                     .expect(201)
@@ -60,7 +65,7 @@ describe('AppController (e2e)', () => {
         describe('POST /login → login', () => {
             // Guards run before pipes so this won't return a 422: https://github.com/nestjs/passport/issues/129
             // it('should return 422 on missing info', () => {
-            //   return request(app.getHttpServer())
+            //   request(api)
             //     .post('/users/login')
             //     .send({ user: {} })
             //     .expect(422)
@@ -72,21 +77,21 @@ describe('AppController (e2e)', () => {
             // })
 
             it('should return 401 on bad username', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/users/login')
                     .send({ user: { email: 'unknown@neo4j.com' } })
                     .expect(401)
             })
 
             it('should return 401 on bad password', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/users/login')
                     .send({ user: { email, password: 'badpassword' } })
                     .expect(401)
             })
 
             it('should return 201 with user profile and token on success', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/users/login')
                     .send({ user: { email, password } })
                     .expect(201)
@@ -108,13 +113,13 @@ describe('AppController (e2e)', () => {
     describe('/user', () => {
         describe('GET / → User info', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/user')
                     .expect(403)
             })
 
             it('should return user info and generate a new token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/user')
                     .set({ Authorization: `Token ${token}` })
                     .expect(200)
@@ -135,14 +140,14 @@ describe('AppController (e2e)', () => {
 
         describe('PUT / → Update user', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .put('/user')
                     .expect(403)
             })
 
             it('should update user info', () => {
                 let bio = 'Interesting'
-                return request(app.getHttpServer())
+                request(api)
                     .put('/user')
                     .set({ Authorization: `Token ${token}` })
                     .send({ user: { bio } })
@@ -181,7 +186,7 @@ describe('AppController (e2e)', () => {
         let newSlug
         let commentId
 
-        beforeAll(() => app.get(Neo4jService).write(`
+        beforeAll(() => neo4j.write(`
             MERGE (johnjacob:User {username: $johnjacob})
             SET johnjacob:Test,
                 johnjacob += { id: randomUUID(), email: $johnjacob +'@neo4j.com', bio: $johnjacob }
@@ -231,11 +236,11 @@ describe('AppController (e2e)', () => {
             RETURN articleCount
         `, { jane, johnjacob, tag, slug, title, otherCommentId, }).then(res => articleCount = res.records[0].get('articleCount').toNumber()))
 
-        afterAll(() => app.get(Neo4jService).write('MATCH (a:Test) DETACH DELETE a'))
+        afterAll(() => neo4j.write('MATCH (a:Test) DETACH DELETE a'))
 
         describe('GET / → List articles', () => {
             it('should return a list of articles without token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/articles')
                     .expect(200)
                     .expect(res => {
@@ -262,14 +267,14 @@ describe('AppController (e2e)', () => {
             })
 
             it('should return a list of articles with token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/articles')
                     .send({ Authorization: `Token ${token}` })
                     .expect(200)
             })
 
             it('should apply pagination', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/articles?limit=1')
                     .expect(200)
                     .expect(res => {
@@ -279,7 +284,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should apply pagination', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/articles?limit=1')
                     .expect(200)
                     .expect(res => {
@@ -289,7 +294,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should filter by author', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles?author=${johnjacob}`)
                     .expect(200)
                     .expect(res => {
@@ -300,7 +305,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should filter by favorited', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles?favorited=${jane}`)
                     .expect(200)
                     .expect(res => {
@@ -310,7 +315,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should filter by tag', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles?tag=${tag}`)
                     .expect(200)
                     .expect(res => {
@@ -324,13 +329,13 @@ describe('AppController (e2e)', () => {
 
         describe('GET /:slug → Article by slug', () => {
             it('should return 404 when article not found', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get('/articles/unknown-slug')
                     .expect(404)
             })
 
             it('should return article by slug', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${slug}`)
                     .expect(200)
                     .expect(res => {
@@ -355,7 +360,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should return article by slug with token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${slug}`)
                     .send({ Authorization: `Token ${token} ` })
                     .expect(200)
@@ -383,13 +388,13 @@ describe('AppController (e2e)', () => {
 
         describe('POST / → Create article', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/articles')
                     .expect(403)
             })
 
             it('should return 422 on missing info', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/articles')
                     .set({ Authorization: `Token ${token}` })
                     .send({ article: {} })
@@ -403,7 +408,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should create a new article', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/articles')
                     .set({ Authorization: `Token ${token}` })
                     .send({ article })
@@ -424,7 +429,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should return newly created article', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${newSlug}`)
                     .expect(200)
                     .expect(res => {
@@ -445,21 +450,21 @@ describe('AppController (e2e)', () => {
 
         describe('PUT / → Update article', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .put(`/articles/${newSlug}`)
                     .send({ article: {} })
                     .expect(403)
             })
 
             it('should return 422 on missing info', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .put(`/articles/${slug}`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(422)
             })
 
             it('should not let you edit article from another author', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .put(`/articles/${slug}`)
                     .set({ Authorization: `Token ${token}` })
                     .send({ article: { body: 'newbody' } })
@@ -471,7 +476,7 @@ describe('AppController (e2e)', () => {
             it('should update and return updated record', () => {
                 let body = 'Updated body'
 
-                return request(app.getHttpServer())
+                request(api)
                     .put(`/articles/${newSlug}`)
                     .set({ Authorization: `Token ${token}` })
                     .send({ article: { body } })
@@ -491,13 +496,13 @@ describe('AppController (e2e)', () => {
 
         describe('POST /:slug/favorite → Favorite an article', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post(`/articles/${slug}/favorite`)
                     .expect(403)
             })
 
             it('should create favorited relationship and return updated record', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post(`/articles/${newSlug}/favorite`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(201)
@@ -511,13 +516,13 @@ describe('AppController (e2e)', () => {
 
         describe('DELETE /:slug/favorite → Remove a favorite', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${slug}/favorite`)
                     .expect(403)
             })
 
             it('should create favorited relationship and return updated record', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${newSlug}/favorite`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(200)
@@ -530,7 +535,7 @@ describe('AppController (e2e)', () => {
 
         describe('GET /:slug/comments → List comments for an article', () => {
             it('should return a list of comments', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${slug}/comments`)
                     .expect(200)
                     .expect(res => {
@@ -544,7 +549,7 @@ describe('AppController (e2e)', () => {
                     })
             })
             it('should return a list of comments with token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${slug}/comments`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(200)
@@ -565,13 +570,13 @@ describe('AppController (e2e)', () => {
 
 
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post(`/articles/${slug}/comments`)
                     .expect(403)
             })
 
             it('should return 422 on missing info', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post(`/articles/${slug}/comments`)
                     .set({ Authorization: `Token ${token}` })
                     .send({ comment: {  } })
@@ -579,7 +584,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should return 404 if article not found', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post('/articles/not-found/comments')
                     .set({ Authorization: `Token ${token}` })
                     .send({ comment: { body } })
@@ -587,7 +592,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should create a new comment', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .post(`/articles/${slug}/comments`)
                     .set({ Authorization: `Token ${token}` })
                     .send({ comment: { body: 'Hello!' } })
@@ -605,7 +610,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should return comment at top of GET request', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .get(`/articles/${slug}/comments`)
                     .expect(res => {
                         expect(res.body.comments).toBeInstanceOf(Object)
@@ -622,13 +627,13 @@ describe('AppController (e2e)', () => {
 
         describe('DELETE /:slug/favorite/:commentId → Delete a comment', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${slug}/comments/${commentId}`)
                     .expect(403)
             })
 
             it('shouldnt let the user delete someone elses comment', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${slug}/comments/${otherCommentId}`)
                     .set({ Authorization: `Token ${token}` })
                     // TODO: .expect(403)
@@ -636,7 +641,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should delete comment', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${slug}/comments/${commentId}`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(200)
@@ -645,14 +650,14 @@ describe('AppController (e2e)', () => {
 
         describe('DELETE /:slug → Create article', () => {
             it('should require a valid token', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${newSlug}`)
                     .send({ article: {} })
                     .expect(403)
             })
 
             it('should not let you delete article from another author', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${slug}`)
                     .set({ Authorization: `Token ${token}` })
                     .send({ article: { body: 'newbody' } })
@@ -662,7 +667,7 @@ describe('AppController (e2e)', () => {
             })
 
             it('should delete the users article', () => {
-                return request(app.getHttpServer())
+                request(api)
                     .delete(`/articles/${newSlug}`)
                     .set({ Authorization: `Token ${token}` })
                     .expect(200)
@@ -671,5 +676,5 @@ describe('AppController (e2e)', () => {
     })
 
 
-    // afterAll(() => app.get(Neo4jService).write(`MATCH (u:User {username: $username}) DETACH DELETE u`, { username }))
+    // afterAll(() => neo4j.write(`MATCH (u:User {username: $username}) DETACH DELETE u`, { username }))
 });

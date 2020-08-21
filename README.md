@@ -3,7 +3,7 @@
 > ### Neo4j & Typescript (using Nest.js) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
 
-This codebase was created to demonstrate a fully fledged fullstack application built with a **Neo4j** database backed of a [Nest.js](https://nestjs.com) application including CRUD operations, authentication, routing, pagination, and more.
+This codebase was created to demonstrate a fully fledged fullstack application built with a **Neo4j** database backed [Nest.js](https://nestjs.com) application including CRUD operations, authentication, routing, pagination, and more.
 
 We've gone to great lengths to adhere to the [Neo4j](https://neo4j.com) and [Nest.js](https://nestjs.com)  community styleguides & best practices.
 
