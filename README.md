@@ -1,32 +1,56 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# ![RealWorld Example App](project-logo.png)
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> ### Neo4j & Typescript (using Nest.js) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
-## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This codebase was created to demonstrate a fully fledged fullstack application built with a **Neo4j** database backed of a [Nest.js](https://nestjs.com) application including CRUD operations, authentication, routing, pagination, and more.
+
+We've gone to great lengths to adhere to the [Neo4j](https://neo4j.com) and [Nest.js](https://nestjs.com)  community styleguides & best practices.
+
+For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
+
+
+# How it works
+
+Neo4j is a [Graph Database](https://neo4j.com/developer/graph-database/), a database designed to hold the connections between data (known as relationships) as important as the data itself.  A Neo4j database consists of Nodes connected together with Relationships.  Both nodes and relationships can contain one or more properties, which are key/value pairs.
+
+For more information on how Neo4j compares to other databases, you can check the following links:
+
+* [RDBMS to Graph](https://neo4j.com/developer/graph-db-vs-rdbms/)
+* [NoSQL to Graph](https://neo4j.com/developer/graph-db-vs-nosql/)
+
+
+## Data Model
+
+![Data Model](./model/arrows.svg)
+
+The data model diagram has been created with [Arrow](http://www.apcjones.com/arrows/).  You can edit the model by clicking the **Export Markup** button in Arrows, copying the contents of [arrows.html](model/arrows.html) into the text box and clicking **Save** at the bottom of the modal.
+
+## Dependencies
+
+* [nest-neo4j](https://github.com/adam-cowley/nest-neo4j) - A module that provides functionality for interacting with a Neo4j Database inside a Nest.js application.
+* **Authentication** is provided by the `passport`, `passport-jwt` and `passport-local` packages.  For more information on how this was implemented, check out the [Authenticating Users in Nest.js with Neo4j ](https://www.youtube.com/watch?v=Y7125-Tb2jE&list=PL9Hl4pk2FsvX-Y5-phtnqY4hJaWeocOkq&index=3) video on the Neo4j Youtube Channel.
+
+## Modules, Controllers, Services
+
+The application contains two modules.  Modules are a way to group functionality (think domains and subdomains in DDD) and a convenient way to register functionality with the main app.  These modules are registered in the [AppModule](./src/app.module.ts).
+
+* [**user**](/src/user) - This module provides functionality based around User nodes.  This includes user profiles, follow/unfollow functionality and all authentication functionality.
+* [**article**](/src/article) - All functionality based around Article and Tag nodes
+
+
+## Validation Errors
+
+Validation errors are returned with the HTTP 400 Bad Request.  The [UnprocessibleEntityValidationPipe](./src/pipes/unprocessible-entity-validation.pipe.ts) extends Nest.js's out-of-the-box `ValidationPipe`, providing an `exceptionFactory` function that instead returns an `UnprocessableEntityException` error containing the error messages required by the UI.
+
+
+# Further Reading
+
+This example was built as part of a series of Live Streams on the [Neo4j Twitch Channel](https://twitch.tv/neo4j_).  You can watch the videos back on the [Building Applications with Neo4j and Typescript playlist](https://www.youtube.com/c/neo4j/playlists) on the [Neo4j Youtube Channel].
+
+
+
+# Getting started
 
 ## Installation
 
@@ -60,16 +84,7 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Questions, Comments, Support
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-  Nest is [MIT licensed](LICENSE).
+If you have any questions or comments, please feel free to reach out on the [Neo4j Community Forum](https://community.neo4j.com) or create an Issue.  If you spot any bugs or missing features, feel free to submit a Pull Request.

@@ -1,0 +1,22 @@
+<ul class="graph-diagram-markup" data-internal-scale="1" data-external-scale="1">
+    <li class="node" data-node-id="0" data-x="0" data-y="0">
+      <span class="caption">User</span><dl class="properties"><dt>id</dt><dd>uuid</dd><dt>username</dt><dd>String</dd><dt>password</dt><dd>String</dd><dt>image</dt><dd>String</dd><dt>bio</dt><dd>String</dd><dt>createdAt</dt><dd>DateTime</dd><dt>updatedAt</dt><dd>DateTime</dd></dl></li>
+    <li class="node" data-node-id="1" data-x="508.26007080078125" data-y="0">
+      <span class="caption">Article</span><dl class="properties"><dt>id</dt><dd>uuid</dd><dt>title</dt><dd>String</dd><dt>body</dt><dd>String</dd><dt>description</dt><dd>String</dd><dt>createdAt</dt><dd>DateTime</dd><dt>updatedAt</dt><dd>DateTime</dd></dl></li>
+    <li class="node" data-node-id="2" data-x="1075.278076171875" data-y="0">
+      <span class="caption">Tag</span><dl class="properties"><dt>id</dt><dd>uuid</dd><dt>slug</dt><dd>String</dd><dt>name</dt><dd>String</dd><dt>createdAt</dt><dd>DateTime</dd><dt>updatedAt</dt><dd>DateTime</dd></dl></li>
+    <li class="node" data-node-id="3" data-x="0" data-y="613.5477714538574">
+      <span class="caption">Comment</span><dl class="properties"><dt>id</dt><dd>uuid</dd><dt>body</dt><dd>String</dd><dt>createdAt</dt><dd>DateTime</dd><dt>updatedAt</dt><dd>DateTime</dd></dl></li>
+    <li class="relationship" data-from="0" data-to="1">
+      <span class="type">POSTED</span>
+    </li>
+    <li class="relationship" data-from="1" data-to="2">
+      <span class="type">HAS_TAG</span>
+    </li>
+    <li class="relationship" data-from="0" data-to="3">
+      <span class="type">COMMENTED</span>
+    </li>
+    <li class="relationship" data-from="3" data-to="1">
+      <span class="type">FOR</span>
+    </li>
+  </ul>
