@@ -24,12 +24,12 @@ For more information on how Neo4j compares to other databases, you can check the
 
 ![Data Model](./model/arrows.svg)
 
-The data model diagram has been created with [Arrow](http://www.apcjones.com/arrows/).  You can edit the model by clicking the **Export Markup** button in Arrows, copying the contents of [arrows.html](model/arrows.html) into the text box and clicking **Save** at the bottom of the modal.
+The data model diagram has been created with [Arrows](http://www.apcjones.com/arrows/).  You can edit the model by clicking the **Export Markup** button in Arrows, copying the contents of [arrows.html](model/arrows.html) into the text box and clicking **Save** at the bottom of the modal.
 
 ## Dependencies
 
 * [nest-neo4j](https://github.com/adam-cowley/nest-neo4j) - A module that provides functionality for interacting with a Neo4j Database inside a Nest.js application.
-* **Authentication** is provided by the `passport`, `passport-jwt` and `passport-local` packages.  For more information on how this was implemented, check out the [Authenticating Users in Nest.js with Neo4j ](https://www.youtube.com/watch?v=Y7125-Tb2jE&list=PL9Hl4pk2FsvX-Y5-phtnqY4hJaWeocOkq&index=3) video on the Neo4j Youtube Channel.
+* **Authentication** is provided by the `passport`, `passport-jwt` and `passport-local` packages.  For more information on how this was implemented, check out the [Authenticating Users in Nest.js with Neo4j ](https://www.youtube.com/watch?v=Y7125-Tb2jE&list=PL9Hl4pk2FsvX-Y5-phtnqY4hJaWeocOkq&index=3) video on the [Neo4j Youtube Channel](https://youtube.com/neo4j).
 
 ## Modules, Controllers, Services
 
